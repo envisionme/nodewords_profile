@@ -1,0 +1,14 @@
+<?php
+// $Id$
+
+/**
+ * @file
+ * 	Basic module uninstall removing module variables
+ */
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function nodewords_profile_uninstall() {
+	variable_del('nodewords_profile_preset');
+}

@@ -1,0 +1,57 @@
+<?php
+/**
+ * @file
+ * 		Module to automate the process of adding meta descriptions, image_src etc to profile for sharing and SEO
+ */
+
+/**
+ * Implementation of hook_init().
+ */
+function nodewords_profile_init() {
+	// check and see if it's a user page
+	if (arg(0) == 'user' && is_numeric(arg(1))) {
+		// get the correct image preset and return if none
+		$preset = variable_get('nodewords_profile_preset', null);
+		if (empty($preset))
+			return;
+		// get the user picture and return if none
+		$account = user_load(arg(1));
+		if (empty($account->picture))
+			return;
+		$image = base_path().imagecache_create_path($preset, $account->picture);
+		// add image_src to head
+		drupal_set_html_head('<link rel="image_src" href="'.$image.'" />');
+	}
+}
+
+/**
+ * Implementation of hook_menu().
+ */
+function nodewords_profile_menu() { 
+  $items['admin/content/nodewords/nodewords-profile'] = array(
+		'title' => 'User Profile',
+		'page callback' => 'drupal_get_form',
+		'page arguments' => array('nodewords_profile_settings_form'),
+		'access arguments' => array('access administration pages'),
+		'type' => MENU_NORMAL_ITEM,
+	);
+	return $items;
+}
+
+/**
+ * Implementation of the admin settings form
+ */
+function nodewords_profile_settings_form() {
+	$presets = array(0 => 'none');
+	// get all imagecache presets
+	foreach (imagecache_presets() as $preset) {
+		$presets[$preset['presetname']] = $preset['presetname'];
+	}
+  $form['nodewords_profile_preset'] = array(
+		'#type' => 'select',
+		'#title' => 'Imagecache preset to use for images',
+		'#default_value' => variable_get('nodewords_profile_preset', null),
+		'#options' => $presets
+  );
+	return system_settings_form($form);
+}

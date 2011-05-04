@@ -1,0 +1,8 @@
+; $Id$
+name = Nodewords - Profile Support
+description = This module leverages nodewords to allow for user image_src pictures for sharing via Facebook etc and custom titles & desc..
+dependencies[] = nodewords
+dependencies[] = content_profile
+dependencies[] = imagecache
+package = NoJoShmo - Custom Modules
+core = 6.x
