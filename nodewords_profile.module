@@ -16,11 +16,10 @@ function nodewords_profile_init() {
 			return;
 		// get the user picture and return if none
 		$account = user_load(arg(1));
-		// dpm($account);
-		dpm(variable_get('nodewords_profile_desc_fields'));
 		if (empty($account->picture))
 			return;
 		$image = base_path().imagecache_create_path($preset, $account->picture);
+		// node description
 		$desc = '';
 		foreach (variable_get('nodewords_profile_desc_fields') as $field) {
 			if ($field > '')
