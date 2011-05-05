@@ -11,4 +11,6 @@
  */
 function nodewords_profile_uninstall() {
 	variable_del('nodewords_profile_preset');
+	variable_del('nodewords_profile_type');
+	variable_del('nodewords_profile_desc_fields');
 }
