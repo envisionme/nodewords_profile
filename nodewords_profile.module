@@ -21,7 +21,7 @@ function nodewords_profile_init() {
 		$image = base_path().imagecache_create_path($preset, $account->picture);
 		// node description
 		$desc = '';
-		foreach (variable_get('nodewords_profile_desc_fields') as $field) {
+		foreach (variable_get('nodewords_profile_desc_fields', array()) as $field) {
 			if ($field > '')
 				$desc .= $account->{$field}.' ';
 		}
