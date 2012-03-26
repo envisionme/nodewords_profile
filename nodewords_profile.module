@@ -11,7 +11,7 @@ function nodewords_profile_init() {
 	// check and see if it's a user page
 	if (arg(0) == 'user' && is_numeric(arg(1))) {
 		// get the correct image preset and return if none
-		$preset = variable_get('nodewords_profile_preset', null);
+		$preset = variable_get('nodewords_profile_preset', '');
 		if (empty($preset))
 			return;
 		// get the user picture and return if none
@@ -27,7 +27,7 @@ function nodewords_profile_init() {
 		}
 		// add image_src to head
 		if (module_exists('realname'))
-			drupal_set_html_head('<meta name="title" content="'.$account->realname.' | '.variable_get('site_name').'" />');
+			drupal_set_html_head('<meta name="title" content="'.$account->realname.' | '.variable_get('site_name', '').'" />');
 		drupal_set_html_head('<meta name="description" content="'.truncate_utf8($desc, 147, true, true).'" />');
 		drupal_set_html_head('<link rel="image_src" href="'.$image.'" />');
 	}
