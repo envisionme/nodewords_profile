@@ -1,77 +1,82 @@
 <?php
 /**
  * @file
- * 		Module to automate the process of adding meta descriptions, image_src etc to profile for sharing and SEO
+ *    Module to automate the process of adding meta descriptions, image_src etc to profile for sharing and SEO
  */
 
 /**
  * Implementation of hook_init().
  */
 function nodewords_profile_init() {
-	// check and see if it's a user page
-	if (arg(0) == 'user' && is_numeric(arg(1))) {
-		// get the correct image preset and return if none
-		$preset = variable_get('nodewords_profile_preset', '');
-		if (empty($preset))
-			return;
-		// get the user picture and return if none
-		$account = user_load(arg(1));
-		if (empty($account->picture))
-			return;
-		$image = base_path().imagecache_create_path($preset, $account->picture);
-		// node description
-		$desc = '';
-		foreach (variable_get('nodewords_profile_desc_fields', array()) as $field) {
-			if ($field > '')
-				$desc .= $account->{$field}.' ';
-		}
-		// add image_src to head
-		if (module_exists('realname'))
-			drupal_set_html_head('<meta name="title" content="'.$account->realname.' | '.variable_get('site_name', '').'" />');
-		drupal_set_html_head('<meta name="description" content="'.truncate_utf8($desc, 147, true, true).'" />');
-		drupal_set_html_head('<link rel="image_src" href="'.$image.'" />');
-	}
+  // check and see if it's a user page
+  if (arg(0) == 'user' && is_numeric(arg(1))) {
+    // get the correct image preset and return if none
+    $preset = variable_get('nodewords_profile_preset', '');
+    if (empty($preset)) {
+      return;
+    }
+    $account = user_load(arg(1));
+
+    // node description
+    $desc = '';
+    foreach (variable_get('nodewords_profile_desc_fields', array()) as $field) {
+      if ($field > '' && !empty($account->{$field})) {
+        $desc .= $account->{$field} . ' ';
+      }
+    }
+    // add image_src to head
+    if (module_exists('realname'))
+      drupal_set_html_head('<meta name="title" content="' . $account->realname . ' | ' . variable_get('site_name', '').'" />');
+    drupal_set_html_head('<meta name="description" content="' . truncate_utf8($desc, 147, true, true) . '" />');
+
+    // get the user picture and return if none
+    if (empty($account->picture)) {
+      return;
+    }
+    $image = base_path().imagecache_create_path($preset, $account->picture);
+    drupal_set_html_head('<link rel="image_src" href="' . njs_angular_cdn_path() . $image . '" />');
+  }
 }
 
 /**
  * Implementation of hook_menu().
  */
-function nodewords_profile_menu() { 
+function nodewords_profile_menu() {
   $items['admin/content/nodewords/nodewords-profile'] = array(
-		'title' => 'User Profile',
-		'page callback' => 'drupal_get_form',
-		'page arguments' => array('nodewords_profile_settings_form'),
-		'access arguments' => array('access administration pages'),
-		'type' => MENU_NORMAL_ITEM,
-	);
-	return $items;
+    'title' => 'User Profile',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('nodewords_profile_settings_form'),
+    'access arguments' => array('access administration pages'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  return $items;
 }
 
 /**
  * Implementation of the admin settings form
  */
 function nodewords_profile_settings_form() {
-	$presets = array(0 => 'none');
-	// get all imagecache presets
-	foreach (imagecache_presets() as $preset) {
-		$presets[$preset['presetname']] = $preset['presetname'];
-	}
+  $presets = array(0 => 'none');
+  // get all imagecache presets
+  foreach (imagecache_presets() as $preset) {
+    $presets[$preset['presetname']] = $preset['presetname'];
+  }
   $form['nodewords_profile_preset'] = array(
-		'#type' => 'select',
-		'#title' => 'Imagecache preset to use for images',
-		'#default_value' => variable_get('nodewords_profile_preset', null),
-		'#options' => $presets
+    '#type' => 'select',
+    '#title' => 'Imagecache preset to use for images',
+    '#default_value' => variable_get('nodewords_profile_preset', null),
+    '#options' => $presets
   );
-	// get all content types
+  // get all content types
   $types = array(0 => 'none');
   foreach (content_profile_get_types() as  $type) {
     $types[$type->type] = $type->name;
   }
-	// return if no content profile type specified
-	if (count($types) <= 1) {
-		$form['error'] = array('#value' => 'No content profile types detected. Please mark a content type as a content profile first.');
-		return $form;
-	}
+  // return if no content profile type specified
+  if (count($types) <= 1) {
+    $form['error'] = array('#value' => 'No content profile types detected. Please mark a content type as a content profile first.');
+    return $form;
+  }
   $form['nodewords_profile_type'] = array(
     '#type' => 'select',
     '#title' => t('Content-type for wizard'),
@@ -79,28 +84,28 @@ function nodewords_profile_settings_form() {
     '#options' => $types,
     '#description' => t('Content type to be used for the wizard process'),
   );
-  
-	// if no other type selected return basic form
-  if (variable_get('nodewords_profile_type', null) == null)
-		return system_settings_form($form);
 
-	// get all type fields
-	$fields = array();
+  // if no other type selected return basic form
+  if (variable_get('nodewords_profile_type', null) == null)
+    return system_settings_form($form);
+
+  // get all type fields
+  $fields = array();
   $type_info = content_types(variable_get('nodewords_profile_type', null));
 
-	foreach($type_info['fields'] as $field) {
-		$fields[$field['field_name']] = $field['widget']['label'];
+  foreach($type_info['fields'] as $field) {
+    $fields[$field['field_name']] = $field['widget']['label'];
   }
 
-	// sorting field list
-	asort($fields);
-  
-	$form['nodewords_profile_desc_fields'] = array(
-		'#type' => 'checkboxes',
-		'#title' => t('Fields to use'),
-		'#default_value' => variable_get('nodewords_profile_desc_fields', null),
-		'#options' => $fields,
-		'#description' => t('Fields to use for the meta descriptions'),
-	);
-	return system_settings_form($form);
+  // sorting field list
+  asort($fields);
+
+  $form['nodewords_profile_desc_fields'] = array(
+    '#type' => 'checkboxes',
+    '#title' => t('Fields to use'),
+    '#default_value' => variable_get('nodewords_profile_desc_fields', null),
+    '#options' => $fields,
+    '#description' => t('Fields to use for the meta descriptions'),
+  );
+  return system_settings_form($form);
 }
